@@ -36,9 +36,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return Redirect::to(tenant_route( Domain::all()->first()->domain,'dashboard'));
+        return Redirect::to(tenant_route(Domain::all()->first()->domain.'.'.config('app.domain') ,'dashboard'));
     }
-
     /**
      * Destroy an authenticated session.
      */

@@ -4,10 +4,13 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Stancl\Tenancy\Contracts\Syncable;
+use Stancl\Tenancy\Contracts\SyncMaster;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
+use Stancl\Tenancy\Database\Models\TenantPivot;
 
 /**
  *
@@ -36,49 +39,30 @@ use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @mixin \Eloquent
  */
-class User extends Authenticatable implements Syncable
+class CentralUser extends Model implements SyncMaster
 {
-    use ResourceSyncing;
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
-
+    // Note that we force the central connection on this model
+    use ResourceSyncing, CentralConnection;
     protected $guarded = [];
     public $timestamps = false;
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    public $table = 'users';
+
     protected $fillable = [
         'global_id',
         'name',
         'email',
         'password',
     ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function tenants(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->belongsToMany(Tenant::class, 'tenant_users', 'global_user_id', 'tenant_id', 'global_id')
+            ->using(TenantPivot::class);
     }
 
+    public function getTenantModelName(): string
+    {
+        return User::class;
+    }
 
     public function getGlobalIdentifierKey()
     {
@@ -92,7 +76,7 @@ class User extends Authenticatable implements Syncable
 
     public function getCentralModelName(): string
     {
-        return CentralUser::class;
+        return static::class;
     }
 
     public function getSyncedAttributeNames(): array
