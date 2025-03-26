@@ -29,8 +29,9 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
     Route::get('/', function () {
+        tenancy()->initialize(\App\Models\Tenant::first());
         if(Auth::check()){
-            return Redirect::to(tenant_route( Domain::all()->first()->domain,'dashboard'));
+            return Redirect::to(tenant_route( Domain::all()->first()->domain.'.'.config('app.domain'),'dashboard'));
         }else{
             return redirect()->route('login');
         }
