@@ -36,7 +36,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return Redirect::to(tenant_route( Domain::all()->first()->domain,'dashboard-tenant'));
+        return Redirect::to(tenant_route( Domain::all()->first()->domain,'dashboard'));
     }
 
     /**
@@ -49,6 +49,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect(config('app.url'));
     }
 }

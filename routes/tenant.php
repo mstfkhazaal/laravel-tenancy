@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Stancl\Tenancy\Database\Models\Domain;
+use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -21,20 +24,20 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 Route::middleware([
     'web',
-    InitializeTenancyByDomain::class,
+    InitializeTenancyBySubdomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
     Route::get('/', function () {
         if(Auth::check()){
-            return redirect()->route('dashboard-tenant');
+            return Redirect::to(tenant_route( Domain::all()->first()->domain,'dashboard'));
         }else{
             return redirect()->route('login');
         }
     })->name('home-tenant');
-    Route::middleware(['auth', 'verified'])->group(function () {
-        Route::get('dashboards', function () {
-            return Inertia::render('dashboard');
-        })->name('dashboard-tenant');
-    });
 
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::get('dashboard', function () {
+            return Inertia::render('dashboard');
+        })->name('dashboard');
+    });
 });
